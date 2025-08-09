@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Welcome to your Lovable project
 
 ## Project info
@@ -93,3 +94,6 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 Supabase notes:
 - In Supabase Auth → URL Configuration, add your Vercel domain to Site URL/Redirect URLs.
 - If you restrict storage CORS, add the Vercel domain to allowed origins.
+=======
+# raga-rhythm-dev
+>>>>>>> 9a162c68eaedecacfa14d1e5cdf1d9cfb4e84616
