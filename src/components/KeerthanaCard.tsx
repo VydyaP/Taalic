@@ -9,7 +9,7 @@ export interface Keerthana {
   tala: string;
   composer: string;
   deity: string;
-  dateTaught: string;
+  dateTaught?: string;
   lyrics?: string;
   meaning?: string;
   notationFiles?: {
@@ -61,8 +61,8 @@ export const KeerthanaCard = ({ keerthana, onClick }: KeerthanaCardProps) => {
             </Badge>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 gap-2">
+
+        <div className="grid grid-cols-2 gap-2">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-composer-primary" />
             <Badge variant="outline" className={getCategoryColor("composer", keerthana.composer)}>
@@ -76,13 +76,14 @@ export const KeerthanaCard = ({ keerthana, onClick }: KeerthanaCardProps) => {
             </Badge>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 pt-2 border-t border-border/30">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            Learned on {new Date(keerthana.dateTaught).toLocaleDateString()}
-          </span>
-        </div>
+        {keerthana.dateTaught && (
+          <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Learned on {new Date(keerthana.dateTaught).toLocaleDateString()}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

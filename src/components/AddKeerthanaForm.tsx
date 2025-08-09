@@ -66,12 +66,12 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.raga && formData.tala && formData.composer && formData.deity && formData.dateTaught) {
+    if (formData.name && formData.raga && formData.tala && formData.composer && formData.deity) {
       setIsSubmitting(true);
       try {
         await onAdd({
           ...formData,
-          dateTaught: formData.dateTaught.toISOString()
+          dateTaught: formData.dateTaught ? formData.dateTaught.toISOString() : undefined as any,
         });
         if (!initialData) {
           setFormData({
@@ -248,7 +248,7 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
           </div>
 
           <div className="space-y-2">
-            <Label className="text-foreground font-medium">Date Taught *</Label>
+            <Label className="text-foreground font-medium">Date Taught (Optional)</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -259,7 +259,7 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dateTaught ? format(formData.dateTaught, "PPP") : "Select date"}
+                  {formData.dateTaught ? format(formData.dateTaught, "PPP") : "Select date (optional)"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">

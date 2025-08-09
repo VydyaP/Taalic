@@ -53,13 +53,21 @@ const Index = () => {
     loadKeerthanas();
   }, [toast]);
 
-  // getFilteredKeerthanas should only group by activeFilter, no search or filter logic
+  // Search + filter helpers
+  const normalizedSearch = searchValue.trim().toLowerCase();
+  const matchesSearch = (k: Keerthana) => {
+    if (!normalizedSearch) return true;
+    return [k.name, k.raga, k.tala, k.composer, k.deity]
+      .filter(Boolean)
+      .some(v => String(v).toLowerCase().includes(normalizedSearch));
+  };
+
   const getFilteredKeerthanas = () => {
-    if (activeFilter === "all") return keerthanas;
-    // Group by the selected filter
-    const groups = {};
-    keerthanas.forEach(keerthana => {
-      const key = keerthana[activeFilter];
+    const list = keerthanas.filter(matchesSearch);
+    if (activeFilter === "all") return list;
+    const groups: Record<string, Keerthana[]> = {};
+    list.forEach(keerthana => {
+      const key = (keerthana as any)[activeFilter] || "Unknown";
       if (!groups[key]) groups[key] = [];
       groups[key].push(keerthana);
     });
@@ -157,6 +165,10 @@ const Index = () => {
             onFilterChange={setActiveFilter}
             onAddNew={() => setShowAddForm(true)}
             totalCount={keerthanas.length}
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            filterType={filterType}
+            onFilterTypeChange={setFilterType}
           />
         </div>
       )}
@@ -176,7 +188,7 @@ const Index = () => {
                   <h2 className="text-2xl font-semibold text-foreground border-b border-border/30 pb-2">
                     {group} ({items.length})
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {items.map((keerthana) => (
                       <KeerthanaCard
                         key={keerthana.id}
@@ -189,7 +201,7 @@ const Index = () => {
               ))
             ) : (
               // All view
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(filteredData as Keerthana[]).map((keerthana) => (
                   <KeerthanaCard
                     key={keerthana.id}
