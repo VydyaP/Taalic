@@ -48,8 +48,8 @@ const Index = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedKeerthanas, setSelectedKeerthanas] = useState<Set<string>>(new Set());
   
-  // Security code (you can change this to any code you want)
-  const SECURITY_CODE = "1234";
+  // Security code from environment variable
+  const SECURITY_CODE = import.meta.env.VITE_SECURITY_CODE || "1234";
 
   useEffect(() => {
     async function loadKeerthanas() {
