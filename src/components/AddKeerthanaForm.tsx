@@ -6,11 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, X, Edit } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Plus, X, Edit } from "lucide-react";
 import { Keerthana } from "./KeerthanaCard";
 
 // Sample data - in a real app, these would come from a database
@@ -32,7 +28,6 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
     tala: initialData?.tala || "",
     composer: initialData?.composer || "",
     deity: initialData?.deity || "",
-    dateTaught: initialData?.dateTaught ? new Date(initialData.dateTaught) : undefined as Date | undefined,
     lyrics: initialData?.lyrics || "",
     meaning: initialData?.meaning || "",
     notationFiles: initialData?.notationFiles || [] as { name: string; url: string; type: 'pdf' | 'image' }[]
@@ -56,7 +51,6 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
         tala: initialData.tala || "",
         composer: initialData.composer || "",
         deity: initialData.deity || "",
-        dateTaught: initialData.dateTaught ? new Date(initialData.dateTaught) : undefined,
         lyrics: initialData.lyrics || "",
         meaning: initialData.meaning || "",
         notationFiles: initialData.notationFiles || []
@@ -71,7 +65,6 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
       try {
         await onAdd({
           ...formData,
-          dateTaught: formData.dateTaught ? formData.dateTaught.toISOString() : undefined as any,
         });
         if (!initialData) {
           setFormData({
@@ -80,7 +73,6 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
             tala: "",
             composer: "",
             deity: "",
-            dateTaught: undefined,
             lyrics: "",
             meaning: "",
             notationFiles: []
@@ -247,31 +239,7 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-foreground font-medium">Date Taught (Optional)</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal border-border",
-                    !formData.dateTaught && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dateTaught ? format(formData.dateTaught, "PPP") : "Select date (optional)"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={formData.dateTaught}
-                  onSelect={(date) => setFormData(prev => ({ ...prev, dateTaught: date }))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+
 
           <div className="space-y-4">
             <Label className="text-foreground font-medium">Notation Files (Optional)</Label>

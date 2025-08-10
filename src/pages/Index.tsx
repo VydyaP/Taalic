@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Navigation, ClassificationFilter } from "@/components/Navigation";
 import { KeerthanaCard, Keerthana } from "@/components/KeerthanaCard";
 import { AddKeerthanaForm } from "@/components/AddKeerthanaForm";
+import { PasswordModal } from "@/components/PasswordModal";
 import { sampleKeerthanas } from "@/data/sampleKeerthanas";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,6 @@ function mapDbToKeerthana(k) {
     tala: k.tala,
     composer: k.composer,
     deity: k.deity,
-    dateTaught: k.date_taught,
     lyrics: k.lyrics,
     meaning: k.meaning,
     notationFiles: k.notation_files,
@@ -37,17 +37,45 @@ const Index = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterType, setFilterType] = useState("raga");
   const searchInputRef = useRef(null);
+  
+  // Password modal states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordAction, setPasswordAction] = useState<"add" | "edit" | "delete">("add");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  
+  // Bulk operations states
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedKeerthanas, setSelectedKeerthanas] = useState<Set<string>>(new Set());
+  
+  // Security code (you can change this to any code you want)
+  const SECURITY_CODE = "1234";
 
   useEffect(() => {
     async function loadKeerthanas() {
-      const { data, error } = await supabase
-        .from("keerthanas")
-        .select("id, name, raga, tala, composer, deity, date_taught, lyrics, meaning, notation_files")
-        .order("created_at", { ascending: false });
-      if (error) {
-        toast({ title: "Error", description: "Failed to load keerthanas" });
-      } else if (data) {
-        setKeerthanas(data.map(mapDbToKeerthana));
+      try {
+        const { data, error } = await supabase
+          .from("keerthanas")
+          .select("id, name, raga, tala, composer, deity, lyrics, meaning, notation_files")
+          .order("created_at", { ascending: false });
+        
+        if (error) {
+          console.error('Supabase load error:', error);
+          toast({ 
+            title: "Error", 
+            description: `Failed to load keerthanas: ${error.message}`,
+            variant: "destructive"
+          });
+        } else if (data) {
+          setKeerthanas(data.map(mapDbToKeerthana));
+        }
+      } catch (error) {
+        console.error('Error in loadKeerthanas:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to load keerthanas. Please refresh the page.",
+          variant: "destructive"
+        });
       }
     }
     loadKeerthanas();
@@ -74,65 +102,160 @@ const Index = () => {
     return groups;
   };
 
-  const addKeerthana = async (newKeerthana: Omit<Keerthana, 'id'>) => {
-    const { data, error } = await supabase
-      .from("keerthanas")
-      .insert([
-        {
-          name: newKeerthana.name,
-          raga: newKeerthana.raga,
-          tala: newKeerthana.tala,
-          composer: newKeerthana.composer,
-          deity: newKeerthana.deity,
-          date_taught: newKeerthana.dateTaught,
-          lyrics: newKeerthana.lyrics,
-          meaning: newKeerthana.meaning,
-          notation_files: newKeerthana.notationFiles,
-        }
-      ])
-      .select("id, name, raga, tala, composer, deity, date_taught, lyrics, meaning, notation_files")
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: "Failed to add keerthana" });
-      throw error;
+  const handlePasswordConfirm = async (password: string) => {
+    setPasswordLoading(true);
+    
+    // Simulate a small delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (password === SECURITY_CODE) {
+      setPasswordLoading(false);
+      setShowPasswordModal(false);
+      
+      // Execute the pending action
+      if (pendingAction) {
+        pendingAction();
+        setPendingAction(null);
+      }
+    } else {
+      setPasswordLoading(false);
+      toast({ 
+        title: "Access Denied", 
+        description: "Incorrect security code. Please try again.",
+        variant: "destructive"
+      });
     }
+  };
 
-    setKeerthanas(prev => [mapDbToKeerthana(data), ...prev]);
-    setShowAddForm(false);
-    toast({
-      title: "Keerthana Added",
-      description: `${data.name} has been added to your collection.`,
+  const requirePassword = (action: "add" | "edit" | "delete", callback: () => void) => {
+    setPasswordAction(action);
+    setPendingAction(() => callback);
+    setShowPasswordModal(true);
+  };
+
+  // Bulk operations handlers
+  const handleToggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedKeerthanas(new Set());
+  };
+
+  const handleKeerthanaSelection = (keerthanaId: string, selected: boolean) => {
+    const newSelected = new Set(selectedKeerthanas);
+    if (selected) {
+      newSelected.add(keerthanaId);
+    } else {
+      newSelected.delete(keerthanaId);
+    }
+    setSelectedKeerthanas(newSelected);
+  };
+
+  const handleBulkDelete = () => {
+    requirePassword("delete", () => {
+      const selectedIds = Array.from(selectedKeerthanas);
+      selectedIds.forEach(id => deleteKeerthana(id));
+      setSelectedKeerthanas(new Set());
+      setIsSelectionMode(false);
     });
   };
 
+  const handleBulkEdit = () => {
+    // For now, we'll just show a message that bulk edit is not implemented yet
+    toast({
+      title: "Bulk Edit",
+      description: "Bulk edit feature is coming soon! For now, please edit keerthanas individually.",
+    });
+  };
+
+  const addKeerthana = async (newKeerthana: Omit<Keerthana, 'id'>) => {
+    try {
+      // Prepare the data for insertion
+      const insertData = {
+        name: newKeerthana.name,
+        raga: newKeerthana.raga,
+        tala: newKeerthana.tala,
+        composer: newKeerthana.composer,
+        deity: newKeerthana.deity,
+        lyrics: newKeerthana.lyrics || null,
+        meaning: newKeerthana.meaning || null,
+        notation_files: newKeerthana.notationFiles && newKeerthana.notationFiles.length > 0 ? newKeerthana.notationFiles : null,
+      };
+
+      const { data, error } = await supabase
+        .from("keerthanas")
+        .insert([insertData])
+        .select("id, name, raga, tala, composer, deity, lyrics, meaning, notation_files")
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        toast({ 
+          title: "Error", 
+          description: `Failed to add keerthana: ${error.message}`,
+          variant: "destructive"
+        });
+        throw error;
+      }
+
+      setKeerthanas(prev => [mapDbToKeerthana(data), ...prev]);
+      setShowAddForm(false);
+      toast({
+        title: "Keerthana Added",
+        description: `${data.name} has been added to your collection.`,
+      });
+    } catch (error) {
+      console.error('Error in addKeerthana:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to add keerthana. Please try again.",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   const updateKeerthana = async (keerthanaId: string, updatedData: Partial<Keerthana>) => {
-    const { data, error } = await supabase
-      .from("keerthanas")
-      .update({
+    try {
+      // Prepare the data for update
+      const updateData = {
         name: updatedData.name,
         raga: updatedData.raga,
         tala: updatedData.tala,
         composer: updatedData.composer,
         deity: updatedData.deity,
-        date_taught: updatedData.dateTaught,
-        lyrics: updatedData.lyrics,
-        meaning: updatedData.meaning,
-        notation_files: updatedData.notationFiles,
-      })
-      .eq("id", keerthanaId)
-      .select("id, name, raga, tala, composer, deity, date_taught, lyrics, meaning, notation_files")
-      .single();
+        lyrics: updatedData.lyrics || null,
+        meaning: updatedData.meaning || null,
+        notation_files: updatedData.notationFiles && updatedData.notationFiles.length > 0 ? updatedData.notationFiles : null,
+      };
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to update keerthana" });
-      return;
+      const { data, error } = await supabase
+        .from("keerthanas")
+        .update(updateData)
+        .eq("id", keerthanaId)
+        .select("id, name, raga, tala, composer, deity, lyrics, meaning, notation_files")
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        toast({ 
+          title: "Error", 
+          description: `Failed to update keerthana: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setKeerthanas(prev => prev.map(k => k.id === keerthanaId ? mapDbToKeerthana(data) : k));
+      setSelectedKeerthana(mapDbToKeerthana(data));
+      setIsEditing(false);
+      toast({ title: "Success", description: "Keerthana updated successfully" });
+    } catch (error) {
+      console.error('Error in updateKeerthana:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to update keerthana. Please try again.",
+        variant: "destructive"
+      });
     }
-
-    setKeerthanas(prev => prev.map(k => k.id === keerthanaId ? mapDbToKeerthana(data) : k));
-    setSelectedKeerthana(mapDbToKeerthana(data));
-    setIsEditing(false);
-    toast({ title: "Success", description: "Keerthana updated successfully" });
   };
 
   const deleteKeerthana = async (keerthanaId: string) => {
@@ -163,12 +286,17 @@ const Index = () => {
           <Navigation
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
-            onAddNew={() => setShowAddForm(true)}
+            onAddNew={() => requirePassword("add", () => setShowAddForm(true))}
             totalCount={keerthanas.length}
             searchValue={searchValue}
             onSearchChange={setSearchValue}
             filterType={filterType}
             onFilterTypeChange={setFilterType}
+            isSelectionMode={isSelectionMode}
+            selectedCount={selectedKeerthanas.size}
+            onToggleSelectionMode={handleToggleSelectionMode}
+            onBulkDelete={handleBulkDelete}
+            onBulkEdit={handleBulkEdit}
           />
         </div>
       )}
@@ -194,6 +322,9 @@ const Index = () => {
                         key={keerthana.id}
                         keerthana={keerthana}
                         onClick={() => setSelectedKeerthana(keerthana)}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedKeerthanas.has(keerthana.id)}
+                        onSelectionChange={(selected) => handleKeerthanaSelection(keerthana.id, selected)}
                       />
                     ))}
                   </div>
@@ -207,6 +338,9 @@ const Index = () => {
                     key={keerthana.id}
                     keerthana={keerthana}
                     onClick={() => setSelectedKeerthana(keerthana)}
+                    isSelectionMode={isSelectionMode}
+                    isSelected={selectedKeerthanas.has(keerthana.id)}
+                    onSelectionChange={(selected) => handleKeerthanaSelection(keerthana.id, selected)}
                   />
                 ))}
               </div>
@@ -249,7 +383,7 @@ const Index = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setIsEditing(true)
+                      requirePassword("edit", () => setIsEditing(true))
                     }}
                     className="flex items-center gap-2"
                     type="button"
@@ -260,7 +394,7 @@ const Index = () => {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => deleteKeerthana(selectedKeerthana.id)}
+                    onClick={() => requirePassword("delete", () => deleteKeerthana(selectedKeerthana.id))}
                     className="flex items-center gap-2"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -269,9 +403,7 @@ const Index = () => {
                 </div>
               </div>
               
-              <div className="text-sm text-muted-foreground">
-                Learned on {new Date(selectedKeerthana.dateTaught).toLocaleDateString()}
-              </div>
+
               
               {(selectedKeerthana.lyrics || selectedKeerthana.notationFiles?.length) && (
                 <div className="space-y-4">
@@ -391,6 +523,25 @@ const Index = () => {
         </DialogContent>
         </Dialog>
       )}
+
+      {/* Password Modal */}
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onConfirm={handlePasswordConfirm}
+        title={
+          passwordAction === "add" ? "Add New Keerthana" :
+          passwordAction === "edit" ? "Edit Keerthana" :
+          "Delete Keerthana"
+        }
+        description={
+          passwordAction === "add" ? "Enter security code to add a new keerthana to your collection." :
+          passwordAction === "edit" ? "Enter security code to edit this keerthana." :
+          "Enter security code to permanently delete this keerthana. This action cannot be undone."
+        }
+        action={passwordAction}
+        isLoading={passwordLoading}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Music, User, Sparkles } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Music, User, Sparkles } from "lucide-react";
 
 export interface Keerthana {
   id: string;
@@ -9,7 +10,6 @@ export interface Keerthana {
   tala: string;
   composer: string;
   deity: string;
-  dateTaught?: string;
   lyrics?: string;
   meaning?: string;
   notationFiles?: {
@@ -22,6 +22,9 @@ export interface Keerthana {
 interface KeerthanaCardProps {
   keerthana: Keerthana;
   onClick?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (selected: boolean) => void;
 }
 
 const getCategoryColor = (category: string, value: string) => {
@@ -34,17 +37,38 @@ const getCategoryColor = (category: string, value: string) => {
   return colors[category as keyof typeof colors] || "bg-secondary text-secondary-foreground";
 };
 
-export const KeerthanaCard = ({ keerthana, onClick }: KeerthanaCardProps) => {
+export const KeerthanaCard = ({ keerthana, onClick, isSelectionMode = false, isSelected = false, onSelectionChange }: KeerthanaCardProps) => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isSelectionMode) {
+      e.stopPropagation();
+      onSelectionChange?.(!isSelected);
+    } else {
+      onClick?.();
+    }
+  };
+
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-border/50 bg-card/80 backdrop-blur-sm"
-      onClick={onClick}
+      className={`group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-border/50 bg-card/80 backdrop-blur-sm ${
+        isSelectionMode ? 'cursor-pointer' : 'cursor-pointer'
+      } ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+      onClick={handleCardClick}
       style={{ boxShadow: 'var(--shadow-card)' }}
     >
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-          {keerthana.name}
-        </CardTitle>
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+            {keerthana.name}
+          </CardTitle>
+          {isSelectionMode && (
+            <Checkbox
+              checked={isSelected}
+              onChange={(checked) => onSelectionChange?.(checked)}
+              className="mt-1"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
@@ -76,14 +100,7 @@ export const KeerthanaCard = ({ keerthana, onClick }: KeerthanaCardProps) => {
             </Badge>
           </div>
         </div>
-        {keerthana.dateTaught && (
-          <div className="flex items-center gap-2 pt-2 border-t border-border/30">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              Learned on {new Date(keerthana.dateTaught).toLocaleDateString()}
-            </span>
-          </div>
-        )}
+
       </CardContent>
     </Card>
   );
