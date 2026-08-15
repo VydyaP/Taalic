@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import { AuthProvider, ProtectedRoute } from "./auth/AuthProvider";
 import { ThemeProvider } from "next-themes";
 
+
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -33,3 +35,6 @@ const App = () => (
 );
 
 export default App;
+
+
+

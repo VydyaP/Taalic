@@ -9,19 +9,30 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Triangle, Trash2, Edit } from "lucide-react";
 import { useRef } from "react";
-import { supabase } from "@/supabase";
+import { db } from "@/firebase";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
 
-function mapDbToKeerthana(k) {
+function mapDocToKeerthana(id: string, data: any): Keerthana {
   return {
-    id: k.id,
-    name: k.name,
-    raga: k.raga,
-    tala: k.tala,
-    composer: k.composer,
-    deity: k.deity,
-    lyrics: k.lyrics,
-    meaning: k.meaning,
-    notationFiles: k.notation_files,
+    id,
+    name: data.name,
+    raga: data.raga,
+    tala: data.tala,
+    composer: data.composer,
+    deity: data.deity,
+    lyrics: data.lyrics,
+    meaning: data.meaning,
+    notationFiles: data.notationFiles,
   };
 }
 
@@ -54,25 +65,13 @@ const Index = () => {
   useEffect(() => {
     async function loadKeerthanas() {
       try {
-        const { data, error } = await supabase
-          .from("keerthanas")
-          .select("id, name, raga, tala, composer, deity, lyrics, meaning, notation_files")
-          .order("created_at", { ascending: false });
-        
-        if (error) {
-          console.error('Supabase load error:', error);
-          toast({ 
-            title: "Error", 
-            description: `Failed to load keerthanas: ${error.message}`,
-            variant: "destructive"
-          });
-        } else if (data) {
-          setKeerthanas(data.map(mapDbToKeerthana));
-        }
+        const q = query(collection(db, "keerthanas"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        setKeerthanas(snapshot.docs.map(d => mapDocToKeerthana(d.id, d.data())));
       } catch (error) {
         console.error('Error in loadKeerthanas:', error);
-        toast({ 
-          title: "Error", 
+        toast({
+          title: "Error",
           description: "Failed to load keerthanas. Please refresh the page.",
           variant: "destructive"
         });
@@ -168,7 +167,6 @@ const Index = () => {
 
   const addKeerthana = async (newKeerthana: Omit<Keerthana, 'id'>) => {
     try {
-      // Prepare the data for insertion
       const insertData = {
         name: newKeerthana.name,
         raga: newKeerthana.raga,
@@ -177,35 +175,23 @@ const Index = () => {
         deity: newKeerthana.deity,
         lyrics: newKeerthana.lyrics || null,
         meaning: newKeerthana.meaning || null,
-        notation_files: newKeerthana.notationFiles && newKeerthana.notationFiles.length > 0 ? newKeerthana.notationFiles : null,
+        notationFiles: newKeerthana.notationFiles && newKeerthana.notationFiles.length > 0 ? newKeerthana.notationFiles : null,
+        createdAt: serverTimestamp(),
       };
 
-      const { data, error } = await supabase
-        .from("keerthanas")
-        .insert([insertData])
-        .select("id, name, raga, tala, composer, deity, lyrics, meaning, notation_files")
-        .single();
+      const docRef = await addDoc(collection(db, "keerthanas"), insertData);
+      const added = mapDocToKeerthana(docRef.id, insertData);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        toast({ 
-          title: "Error", 
-          description: `Failed to add keerthana: ${error.message}`,
-          variant: "destructive"
-        });
-        throw error;
-      }
-
-      setKeerthanas(prev => [mapDbToKeerthana(data), ...prev]);
+      setKeerthanas(prev => [added, ...prev]);
       setShowAddForm(false);
       toast({
         title: "Keerthana Added",
-        description: `${data.name} has been added to your collection.`,
+        description: `${added.name} has been added to your collection.`,
       });
     } catch (error) {
       console.error('Error in addKeerthana:', error);
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: "Failed to add keerthana. Please try again.",
         variant: "destructive"
       });
@@ -215,7 +201,6 @@ const Index = () => {
 
   const updateKeerthana = async (keerthanaId: string, updatedData: Partial<Keerthana>) => {
     try {
-      // Prepare the data for update
       const updateData = {
         name: updatedData.name,
         raga: updatedData.raga,
@@ -224,34 +209,20 @@ const Index = () => {
         deity: updatedData.deity,
         lyrics: updatedData.lyrics || null,
         meaning: updatedData.meaning || null,
-        notation_files: updatedData.notationFiles && updatedData.notationFiles.length > 0 ? updatedData.notationFiles : null,
+        notationFiles: updatedData.notationFiles && updatedData.notationFiles.length > 0 ? updatedData.notationFiles : null,
       };
 
-      const { data, error } = await supabase
-        .from("keerthanas")
-        .update(updateData)
-        .eq("id", keerthanaId)
-        .select("id, name, raga, tala, composer, deity, lyrics, meaning, notation_files")
-        .single();
+      await updateDoc(doc(db, "keerthanas", keerthanaId), updateData);
+      const updated = mapDocToKeerthana(keerthanaId, updateData);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        toast({ 
-          title: "Error", 
-          description: `Failed to update keerthana: ${error.message}`,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setKeerthanas(prev => prev.map(k => k.id === keerthanaId ? mapDbToKeerthana(data) : k));
-      setSelectedKeerthana(mapDbToKeerthana(data));
+      setKeerthanas(prev => prev.map(k => k.id === keerthanaId ? updated : k));
+      setSelectedKeerthana(updated);
       setIsEditing(false);
       toast({ title: "Success", description: "Keerthana updated successfully" });
     } catch (error) {
       console.error('Error in updateKeerthana:', error);
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: "Failed to update keerthana. Please try again.",
         variant: "destructive"
       });
@@ -259,12 +230,10 @@ const Index = () => {
   };
 
   const deleteKeerthana = async (keerthanaId: string) => {
-    const { error } = await supabase
-      .from("keerthanas")
-      .delete()
-      .eq("id", keerthanaId);
-
-    if (error) {
+    try {
+      await deleteDoc(doc(db, "keerthanas", keerthanaId));
+    } catch (error) {
+      console.error('Error in deleteKeerthana:', error);
       toast({ title: "Error", description: "Failed to delete keerthana" });
       return;
     }
