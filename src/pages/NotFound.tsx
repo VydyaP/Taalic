@@ -1,5 +1,7 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { Music } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
@@ -12,13 +14,16 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-6">
+      <div className="text-center space-y-4">
+        <Music className="h-10 w-10 mx-auto text-primary" />
+        <h1 className="font-display text-6xl font-bold">404</h1>
+        <p className="text-lg text-muted-foreground">
+          This keerthana doesn't exist in the collection.
+        </p>
+        <Button asChild className="mt-2">
+          <Link to="/">Return to Collection</Link>
+        </Button>
       </div>
     </div>
   );

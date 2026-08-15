@@ -1,10 +1,24 @@
 import { Button } from "@/components/ui/button";
-import { Music, Users, Clock, Sparkles, Library, Plus, Search, Triangle, User, Sparkles as SparklesIcon, Trash2, Edit, CheckSquare, Square } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput } from "@/components/ui/command";
+import {
+  Music, Users, Clock, Sparkles, Library, Plus, Search,
+  Trash2, Edit, CheckSquare, Square, Moon, Sun, MoreVertical, LogOut, ChevronDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
 
 export type ClassificationFilter = "all" | "raga" | "tala" | "composer" | "deity";
 
@@ -15,8 +29,6 @@ interface NavigationProps {
   totalCount: number;
   searchValue?: string;
   onSearchChange?: (v: string) => void;
-  filterType?: string;
-  onFilterTypeChange?: (v: string) => void;
   isSelectionMode?: boolean;
   selectedCount?: number;
   onToggleSelectionMode?: () => void;
@@ -32,64 +44,62 @@ const navigationItems = [
   { key: "deity" as const, label: "By Deity", icon: Sparkles, color: "text-deity-primary" },
 ];
 
-export const Navigation = ({ 
-  activeFilter, 
-  onFilterChange, 
-  onAddNew, 
-  totalCount, 
-  searchValue = "", 
-  onSearchChange, 
-  filterType = "raga", 
-  onFilterTypeChange,
+function initials(user: { displayName?: string | null; email?: string | null }) {
+  const source = user.displayName || user.email || "";
+  const parts = source.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase() || "?";
+}
+
+export const Navigation = ({
+  activeFilter,
+  onFilterChange,
+  onAddNew,
+  searchValue = "",
+  onSearchChange,
   isSelectionMode = false,
   selectedCount = 0,
   onToggleSelectionMode,
   onBulkDelete,
-  onBulkEdit
+  onBulkEdit,
 }: NavigationProps) => {
-  const { signOutUser, user } = useAuth();
+  const { signOutUser, user, loading } = useAuth();
   const { setTheme, resolvedTheme } = useTheme();
-  const [showSearch, setShowSearch] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
-  const searchInputRef = useRef(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const activeItem = navigationItems.find((i) => i.key === activeFilter) ?? navigationItems[0];
+  const ActiveIcon = activeItem.icon;
+
   return (
-    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 py-6 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col space-y-6">
-          {/* Top bar: centered title, actions on right */}
-          <div className="grid grid-cols-3 items-center">
-            <div className="flex items-center">
-              <div className="text-left">
-                {user ? (
-                  <div className="flex items-center gap-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg p-3 border border-blue-200/50 shadow-sm">
-                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-md">
-                      <User className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Welcome back</p>
-                      <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                        {user.displayName || user.email?.split('@')[0] || 'User'}
-                      </p>
-                    </div>
-                    <SparklesIcon className="h-4 w-4 text-blue-500/60 animate-pulse" />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-center w-10 h-10 bg-gray-400 rounded-full">
-                      <User className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Loading...</p>
-                      <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">User</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="justify-self-center text-center">
-              <h1 className="text-3xl font-bold text-foreground">Keerthana Collection</h1>
-            </div>
-            <div className="justify-self-end flex items-center gap-3">
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 py-4 px-4 sm:py-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Top bar */}
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-display text-xl sm:text-3xl font-bold text-foreground truncate">
+            Keerthana Collection
+          </h1>
+
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Search */}
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Search">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 p-0">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Search keerthanas..."
+                    value={searchValue}
+                    onValueChange={(v) => onSearchChange?.(v)}
+                  />
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            {/* Desktop actions */}
+            <div className="hidden md:flex items-center gap-3">
               <Button
                 variant="outline"
                 size="icon"
@@ -100,147 +110,162 @@ export const Navigation = ({
               </Button>
               {!isSelectionMode ? (
                 <>
-                  <Button
-                    onClick={onAddNew}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                    style={{ transition: 'var(--transition-smooth)', boxShadow: 'var(--shadow-elegant)' }}
-                  >
+                  <Button onClick={onAddNew} className="shadow-elegant transition-smooth">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Kruthi
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={onToggleSelectionMode}
-                    className="flex items-center gap-2"
-                  >
-                    <CheckSquare className="h-4 w-4" />
+                  <Button variant="outline" onClick={onToggleSelectionMode}>
+                    <CheckSquare className="h-4 w-4 mr-2" />
                     Select
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button
-                    variant="destructive"
-                    onClick={onBulkDelete}
-                    disabled={selectedCount === 0}
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
+                  <Button variant="destructive" onClick={onBulkDelete} disabled={selectedCount === 0}>
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Delete ({selectedCount})
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={onBulkEdit}
-                    disabled={selectedCount === 0}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
+                  <Button variant="outline" onClick={onBulkEdit} disabled={selectedCount === 0}>
+                    <Edit className="h-4 w-4 mr-2" />
                     Edit ({selectedCount})
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={onToggleSelectionMode}
-                    className="flex items-center gap-2"
-                  >
-                    <Square className="h-4 w-4" />
+                  <Button variant="outline" onClick={onToggleSelectionMode}>
+                    <Square className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
                 </>
               )}
               <Button variant="outline" onClick={signOutUser}>Log out</Button>
             </div>
+
+            {/* Mobile actions */}
+            <div className="flex md:hidden items-center gap-2">
+              {!isSelectionMode ? (
+                <Button size="icon" onClick={onAddNew} aria-label="Add Kruthi" className="shadow-elegant">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  onClick={onBulkDelete}
+                  disabled={selectedCount === 0}
+                  aria-label={`Delete ${selectedCount} selected`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="More actions">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
+                    {resolvedTheme === "dark" ? (
+                      <Sun className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Moon className="h-4 w-4 mr-2" />
+                    )}
+                    Toggle theme
+                  </DropdownMenuItem>
+                  {!isSelectionMode ? (
+                    <DropdownMenuItem onClick={onToggleSelectionMode}>
+                      <CheckSquare className="h-4 w-4 mr-2" />
+                      Select
+                    </DropdownMenuItem>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={onBulkEdit} disabled={selectedCount === 0}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit ({selectedCount})
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={onToggleSelectionMode}>
+                        <Square className="h-4 w-4 mr-2" />
+                        Cancel selection
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOutUser}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* User avatar */}
+            {loading ? (
+              <Skeleton className="h-9 w-9 rounded-full" />
+            ) : (
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user?.photoURL ?? undefined} alt={user?.displayName ?? "User"} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  {user ? initials(user) : "?"}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
+        </div>
+
+        {/* Filter row */}
+        <div>
+          {/* Desktop: pill buttons, wrap instead of overflow */}
+          <div className="hidden md:flex flex-wrap gap-2">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeFilter === item.key;
+              return (
+                <Button
+                  key={item.key}
+                  variant={isActive ? "default" : "outline"}
+                  onClick={() => onFilterChange(item.key)}
+                  className={cn("flex items-center gap-2 h-10 px-4 transition-smooth", !isActive && item.color)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Button>
+              );
+            })}
           </div>
 
-          {/* Spread-out rectangular filter buttons with search in the empty space */}
-          <div className="mt-2">
-            <div className="grid grid-cols-12 gap-4 items-center">
-              {/* Filter buttons spread across the first 8 columns */}
-              <div className="col-span-8 flex items-center gap-3">
+          {/* Mobile: single trigger opening a bottom sheet */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full md:hidden justify-between">
+                <span className="flex items-center gap-2">
+                  <ActiveIcon className={cn("h-4 w-4", activeItem.color)} />
+                  {activeItem.label}
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle>Browse by</SheetTitle>
+              </SheetHeader>
+              <div className="grid grid-cols-1 gap-2 py-4">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeFilter === item.key;
                   return (
-                    <Button
-                      key={item.key}
-                      variant={isActive ? "default" : "outline"}
-                      onClick={() => onFilterChange(item.key)}
-                      className={cn(
-                        "flex items-center justify-center gap-2 h-10 px-4 transition-all duration-200 flex-1",
-                        isActive ? "bg-primary text-primary-foreground shadow-md" : "border-border hover:bg-secondary/50",
-                        !isActive && item.color
-                      )}
-                      style={{ transition: 'var(--transition-smooth)' }}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </Button>
+                    <SheetClose asChild key={item.key}>
+                      <Button
+                        variant={isActive ? "default" : "outline"}
+                        onClick={() => onFilterChange(item.key)}
+                        className="justify-start h-12 text-base"
+                      >
+                        <Icon className={cn("h-5 w-5 mr-3", !isActive && item.color)} />
+                        {item.label}
+                      </Button>
+                    </SheetClose>
                   );
                 })}
               </div>
-              
-              {/* Search controls in the empty space (last 4 columns) */}
-              <div className="col-span-4 flex justify-end">
-                <div className="relative w-full max-w-md">
-                  {!showSearch ? (
-                    <button
-                      aria-label="Open search"
-                      className="w-full flex items-center justify-center gap-2 p-2 rounded-lg border border-border hover:bg-muted/50 transition-all"
-                      onClick={() => {
-                        setShowSearch(true);
-                        setTimeout(() => (searchInputRef.current as any)?.focus(), 100);
-                      }}
-                    >
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Search Keerthanas...</span>
-                    </button>
-                  ) : (
-                    <div
-                      className="flex items-center border rounded-lg bg-background px-3 py-2 shadow-sm transition-all w-full"
-                      tabIndex={-1}
-                      onBlur={e => {
-                        if (!e.currentTarget.contains(e.relatedTarget as any)) setShowSearch(false);
-                      }}
-                    >
-                      <Search className="h-4 w-4 text-muted-foreground mr-2" />
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchValue}
-                        onChange={e => onSearchChange?.(e.target.value)}
-                        placeholder="Search Keerthanas..."
-                        className="flex-1 bg-transparent outline-none text-sm"
-                      />
-                      <button
-                        aria-label="Show filters"
-                        className="ml-2 p-1 rounded hover:bg-muted"
-                        onClick={() => setShowFilter(f => !f)}
-                      >
-                        <Triangle className="h-4 w-4 rotate-180 text-muted-foreground" />
-                      </button>
-                      {showFilter && (
-                        <div className="absolute right-0 top-10 z-10 bg-background border rounded shadow-md min-w-[140px]">
-                          {[
-                            { key: "raga", label: "By Raga" },
-                            { key: "tala", label: "By Tala" },
-                            { key: "composer", label: "By Composer" },
-                            { key: "deity", label: "By Deity" },
-                          ].map(opt => (
-                            <button
-                              key={opt.key}
-                              className={`block w-full text-left px-4 py-2 hover:bg-muted ${filterType === opt.key ? "font-bold" : ""}`}
-                              onClick={() => { onFilterTypeChange?.(opt.key); setShowFilter(false); }}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </div>

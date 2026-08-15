@@ -2,58 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 35 15% 97%;
-    --foreground: 25 25% 15%;
+    --background: 30 20% 98%;
+    --foreground: 25 30% 12%;
 
-    --card: 40 20% 99%;
-    --card-foreground: 25 25% 15%;
+    --card: 30 25% 99.5%;
+    --card-foreground: 25 30% 12%;
 
-    --popover: 40 20% 99%;
-    --popover-foreground: 25 25% 15%;
+    --popover: 30 25% 99.5%;
+    --popover-foreground: 25 30% 12%;
 
-    --primary: 25 80% 45%;
-    --primary-foreground: 40 20% 99%;
+    --primary: 22 75% 42%;
+    --primary-foreground: 30 25% 99%;
 
-    --secondary: 35 30% 90%;
-    --secondary-foreground: 25 25% 15%;
+    --secondary: 30 25% 92%;
+    --secondary-foreground: 25 30% 15%;
 
-    --muted: 35 20% 93%;
-    --muted-foreground: 25 15% 45%;
+    --muted: 30 18% 93%;
+    --muted-foreground: 25 12% 42%;
 
-    --accent: 15 70% 55%;
-    --accent-foreground: 40 20% 99%;
+    --accent: 30 25% 90%;
+    --accent-foreground: 25 30% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 30 25% 99%;
 
-    --border: 35 25% 85%;
-    --input: 35 25% 85%;
-    --ring: 25 80% 45%;
+    --border: 30 20% 86%;
+    --input: 30 20% 86%;
+    --ring: 22 75% 42%;
 
     /* Custom tokens for Carnatic music theme */
-    --raga-primary: 25 80% 45%;
-    --raga-secondary: 35 60% 60%;
-    --tala-primary: 200 70% 50%;
-    --composer-primary: 280 60% 55%;
-    --deity-primary: 15 70% 55%;
-    
-    --gradient-warm: linear-gradient(135deg, hsl(25 80% 45%), hsl(35 60% 60%));
-    --gradient-cool: linear-gradient(135deg, hsl(200 70% 50%), hsl(220 60% 60%));
-    --gradient-mystical: linear-gradient(135deg, hsl(280 60% 55%), hsl(300 50% 65%));
-    --gradient-divine: linear-gradient(135deg, hsl(15 70% 55%), hsl(45 80% 65%));
-    
-    --shadow-elegant: 0 4px 20px -4px hsl(25 80% 45% / 0.15);
-    --shadow-card: 0 2px 10px -2px hsl(25 30% 30% / 0.1);
-    
+    --raga-primary: 22 70% 42%;
+    --raga-secondary: 35 55% 58%;
+    --raga-foreground: 30 25% 99%;
+
+    --tala-primary: 198 55% 40%;
+    --tala-foreground: 30 25% 99%;
+
+    --composer-primary: 265 40% 45%;
+    --composer-foreground: 30 25% 99%;
+
+    --deity-primary: 350 55% 46%;
+    --deity-foreground: 30 25% 99%;
+
+    --gradient-warm: linear-gradient(135deg, hsl(22 70% 42%), hsl(35 55% 58%));
+    --gradient-cool: linear-gradient(135deg, hsl(198 55% 40%), hsl(210 50% 55%));
+    --gradient-mystical: linear-gradient(135deg, hsl(265 40% 45%), hsl(280 35% 58%));
+    --gradient-divine: linear-gradient(135deg, hsl(350 55% 46%), hsl(20 65% 60%));
+
+    --shadow-elegant: 0 4px 20px -4px hsl(22 75% 42% / 0.18);
+    --shadow-card: 0 2px 10px -2px hsl(25 30% 20% / 0.08);
+
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -73,33 +80,56 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 25 22% 8%;
+    --foreground: 30 20% 94%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 25 20% 11%;
+    --card-foreground: 30 20% 94%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 25 20% 11%;
+    --popover-foreground: 30 20% 94%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 28 70% 58%;
+    --primary-foreground: 25 30% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 25 15% 18%;
+    --secondary-foreground: 30 20% 94%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 25 15% 16%;
+    --muted-foreground: 30 10% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 25 15% 20%;
+    --accent-foreground: 30 20% 94%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 30 20% 96%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 25 15% 20%;
+    --input: 25 15% 20%;
+    --ring: 28 70% 58%;
+
+    /* Carnatic category tokens — same hues as light, brightened for dark-bg legibility */
+    --raga-primary: 25 65% 55%;
+    --raga-secondary: 38 55% 62%;
+    --raga-foreground: 25 30% 10%;
+
+    --tala-primary: 200 60% 55%;
+    --tala-foreground: 25 30% 10%;
+
+    --composer-primary: 265 45% 62%;
+    --composer-foreground: 25 30% 10%;
+
+    --deity-primary: 350 60% 60%;
+    --deity-foreground: 25 30% 10%;
+
+    --gradient-warm: linear-gradient(135deg, hsl(25 65% 55%), hsl(38 55% 62%));
+    --gradient-cool: linear-gradient(135deg, hsl(200 60% 55%), hsl(210 55% 62%));
+    --gradient-mystical: linear-gradient(135deg, hsl(265 45% 62%), hsl(280 40% 65%));
+    --gradient-divine: linear-gradient(135deg, hsl(350 60% 60%), hsl(20 60% 65%));
+
+    --shadow-elegant: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
+    --shadow-card: 0 2px 10px -2px hsl(0 0% 0% / 0.3);
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -118,5 +148,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: var(--transition-smooth);
   }
 }

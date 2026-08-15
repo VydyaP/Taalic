@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PasswordModalProps {
@@ -16,14 +16,38 @@ interface PasswordModalProps {
   isLoading?: boolean;
 }
 
-export const PasswordModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title, 
-  description, 
+const actionConfig = {
+  add: {
+    icon: Plus,
+    text: "text-primary",
+    bg: "bg-primary/10",
+    border: "border-primary/20",
+    button: "bg-primary hover:bg-primary/90 text-primary-foreground",
+  },
+  edit: {
+    icon: Pencil,
+    text: "text-tala-primary",
+    bg: "bg-tala-primary/10",
+    border: "border-tala-primary/20",
+    button: "bg-tala-primary hover:bg-tala-primary/90 text-tala-foreground",
+  },
+  delete: {
+    icon: Trash2,
+    text: "text-destructive",
+    bg: "bg-destructive/10",
+    border: "border-destructive/20",
+    button: "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
+  },
+} as const;
+
+export const PasswordModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  description,
   action,
-  isLoading = false 
+  isLoading = false
 }: PasswordModalProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,33 +70,8 @@ export const PasswordModal = ({
     onClose();
   };
 
-  const getActionConfig = () => {
-    switch (action) {
-      case "add":
-        return {
-          icon: "➕",
-          color: "text-green-600",
-          bgColor: "bg-green-50 dark:bg-green-950/20",
-          borderColor: "border-green-200 dark:border-green-800"
-        };
-      case "edit":
-        return {
-          icon: "✏️",
-          color: "text-blue-600",
-          bgColor: "bg-blue-50 dark:bg-blue-950/20",
-          borderColor: "border-blue-200 dark:border-blue-800"
-        };
-      case "delete":
-        return {
-          icon: "🗑️",
-          color: "text-red-600",
-          bgColor: "bg-red-50 dark:bg-red-950/20",
-          borderColor: "border-red-200 dark:border-red-800"
-        };
-    }
-  };
-
-  const config = getActionConfig();
+  const config = actionConfig[action];
+  const ActionIcon = config.icon;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -81,14 +80,14 @@ export const PasswordModal = ({
           {/* Header with icon */}
           <div className={cn(
             "flex items-center justify-center w-16 h-16 rounded-full border-2",
-            config.bgColor,
-            config.borderColor
+            config.bg,
+            config.border
           )}>
-            <span className="text-2xl">{config.icon}</span>
+            <ActionIcon className={cn("h-7 w-7", config.text)} />
           </div>
 
           <div className="text-center space-y-2">
-            <DialogTitle className={cn("text-xl font-semibold", config.color)}>
+            <DialogTitle className={cn("font-display text-xl font-semibold", config.text)}>
               {title}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -117,7 +116,7 @@ export const PasswordModal = ({
                   placeholder="Enter security code"
                   className={cn(
                     "pl-10 pr-10",
-                    error && "border-red-500 focus:border-red-500"
+                    error && "border-destructive focus-visible:ring-destructive"
                   )}
                   disabled={isLoading}
                 />
@@ -135,7 +134,7 @@ export const PasswordModal = ({
                 </button>
               </div>
               {error && (
-                <div className="flex items-center gap-2 text-sm text-red-600">
+                <div className="flex items-center gap-2 text-sm text-destructive">
                   <AlertCircle className="h-4 w-4" />
                   {error}
                 </div>
@@ -155,17 +154,12 @@ export const PasswordModal = ({
               </Button>
               <Button
                 type="submit"
-                className={cn(
-                  "flex-1",
-                  action === "add" && "bg-green-600 hover:bg-green-700",
-                  action === "edit" && "bg-blue-600 hover:bg-blue-700",
-                  action === "delete" && "bg-red-600 hover:bg-red-700"
-                )}
+                className={cn("flex-1", config.button)}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Verifying...
                   </div>
                 ) : (

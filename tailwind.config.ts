@@ -54,16 +54,20 @@ export default {
 				},
 				raga: {
 					primary: 'hsl(var(--raga-primary))',
-					secondary: 'hsl(var(--raga-secondary))'
+					secondary: 'hsl(var(--raga-secondary))',
+					foreground: 'hsl(var(--raga-foreground))'
 				},
 				tala: {
-					primary: 'hsl(var(--tala-primary))'
+					primary: 'hsl(var(--tala-primary))',
+					foreground: 'hsl(var(--tala-foreground))'
 				},
 				composer: {
-					primary: 'hsl(var(--composer-primary))'
+					primary: 'hsl(var(--composer-primary))',
+					foreground: 'hsl(var(--composer-foreground))'
 				},
 				deity: {
-					primary: 'hsl(var(--deity-primary))'
+					primary: 'hsl(var(--deity-primary))',
+					foreground: 'hsl(var(--deity-foreground))'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
@@ -80,6 +84,20 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			fontFamily: {
+				display: ['Fraunces', 'serif'],
+				sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+			},
+			boxShadow: {
+				elegant: 'var(--shadow-elegant)',
+				card: 'var(--shadow-card)'
+			},
+			backgroundImage: {
+				'gradient-warm': 'var(--gradient-warm)',
+				'gradient-cool': 'var(--gradient-cool)',
+				'gradient-mystical': 'var(--gradient-mystical)',
+				'gradient-divine': 'var(--gradient-divine)'
 			},
 			keyframes: {
 				'accordion-down': {

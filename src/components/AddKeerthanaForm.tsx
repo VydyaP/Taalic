@@ -1,19 +1,20 @@
-import { uploadFile } from '../utils/storage'
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { uploadFile } from "../utils/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, Edit } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ClassificationCombobox } from "@/components/ClassificationCombobox";
+import { Loader2, X } from "lucide-react";
 import { Keerthana } from "./KeerthanaCard";
+import { keerthanaSchema, KeerthanaFormValues } from "@/lib/schemas";
+import { useToast } from "@/hooks/use-toast";
+import { ragas, talas, composers, deities } from "@/data/classifications";
 
-// Sample data - in a real app, these would come from a database
-const ragas = ["Shankarabharanam", "Kalyani", "Kharaharapriya", "Mayamalavagowla", "Saveri", "Hanumatodi", "Natabhairavi"];
-const talas = ["Adi", "Rupaka", "Khanda Chapu", "Misra Chapu", "Triputa", "Ata", "Eka"];
-const composers = ["Tyagaraja", "Muthuswami Dikshitar", "Syama Sastri", "Purandara Dasa", "Annamacharya", "Kshetrayya"];
-const deities = ["Rama", "Krishna", "Shiva", "Devi", "Ganesha", "Murugan", "Vishnu", "Lakshmi"];
+type NotationFile = { name: string; url: string; type: 'pdf' | 'image' };
 
 interface AddKeerthanaFormProps {
   onAdd: (keerthana: Omit<Keerthana, 'id'>) => Promise<void>;
@@ -21,31 +22,42 @@ interface AddKeerthanaFormProps {
   initialData?: Keerthana;
 }
 
+const emptyValues: KeerthanaFormValues = {
+  name: "",
+  raga: "",
+  tala: "",
+  composer: "",
+  deity: "",
+  lyrics: "",
+  meaning: "",
+};
+
 export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaFormProps) => {
-  const [formData, setFormData] = useState({
-    name: initialData?.name || "",
-    raga: initialData?.raga || "",
-    tala: initialData?.tala || "",
-    composer: initialData?.composer || "",
-    deity: initialData?.deity || "",
-    lyrics: initialData?.lyrics || "",
-    meaning: initialData?.meaning || "",
-    notationFiles: initialData?.notationFiles || [] as { name: string; url: string; type: 'pdf' | 'image' }[]
-  });
+  const { toast } = useToast();
+  const [notationFiles, setNotationFiles] = useState<NotationFile[]>(initialData?.notationFiles || []);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Ensure the Select components only receive valid values so typing free text
-  // into the corresponding Input does not conflict with Radix Select.
-  const selectedRaga = ragas.includes(formData.raga) ? formData.raga : undefined;
-  const selectedTala = talas.includes(formData.tala) ? formData.tala : undefined;
-  const selectedComposer = composers.includes(formData.composer) ? formData.composer : undefined;
-  const selectedDeity = deities.includes(formData.deity) ? formData.deity : undefined;
+  const form = useForm<KeerthanaFormValues>({
+    resolver: zodResolver(keerthanaSchema),
+    defaultValues: initialData
+      ? {
+          name: initialData.name || "",
+          raga: initialData.raga || "",
+          tala: initialData.tala || "",
+          composer: initialData.composer || "",
+          deity: initialData.deity || "",
+          lyrics: initialData.lyrics || "",
+          meaning: initialData.meaning || "",
+        }
+      : emptyValues,
+  });
 
-  // Update form data when initialData changes
+  // Reset when switching which keerthana is being edited (not on every re-render)
   useEffect(() => {
     if (initialData) {
-      setFormData({
+      form.reset({
         name: initialData.name || "",
         raga: initialData.raga || "",
         tala: initialData.tala || "",
@@ -53,297 +65,233 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
         deity: initialData.deity || "",
         lyrics: initialData.lyrics || "",
         meaning: initialData.meaning || "",
-        notationFiles: initialData.notationFiles || []
       });
+      setNotationFiles(initialData.notationFiles || []);
     }
-  }, [initialData?.id]); // Only run when the ID changes, not the entire object
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.name && formData.raga && formData.tala && formData.composer && formData.deity) {
-      setIsSubmitting(true);
-      try {
-        await onAdd({
-          ...formData,
-        });
-        if (!initialData) {
-          setFormData({
-            name: "",
-            raga: "",
-            tala: "",
-            composer: "",
-            deity: "",
-            lyrics: "",
-            meaning: "",
-            notationFiles: []
-          });
-        }
-      } catch (error) {
-        console.error('Error in form submission:', error);
-      } finally {
-        setIsSubmitting(false);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setUploadProgress(0);
+    try {
+      const url = await uploadFile(file, setUploadProgress);
+      const type: 'pdf' | 'image' = file.type.includes('pdf') ? 'pdf' : 'image';
+      setNotationFiles((prev) => [...prev, { name: file.name, url, type }]);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload the file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      e.target.value = '';
+    }
+  };
+
+  const onSubmit = async (values: KeerthanaFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await onAdd({ ...values, notationFiles });
+      if (!initialData) {
+        form.reset(emptyValues);
+        setNotationFiles([]);
       }
+    } catch (error) {
+      console.error('Error in form submission:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-2xl text-foreground">
-          {initialData ? (
-            <>
-              <Edit className="h-6 w-6 text-primary" />
-              Edit Keerthana
-            </>
-          ) : (
-            <>
-              <Plus className="h-6 w-6 text-primary" />
-              Add New Keerthana
-            </>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Keerthana Name *</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter keerthana name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </CardTitle>
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label="Close"
-          className="ml-auto p-2 rounded-full hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <X className="h-6 w-6 text-muted-foreground" />
-        </button>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-foreground font-medium">Keerthana Name *</Label>
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="raga"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Raga *</FormLabel>
+                <FormControl>
+                  <ClassificationCombobox
+                    label="Raga"
+                    options={ragas}
+                    value={field.value}
+                    onChange={field.onChange}
+                    category="raga"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="tala"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tala *</FormLabel>
+                <FormControl>
+                  <ClassificationCombobox
+                    label="Tala"
+                    options={talas}
+                    value={field.value}
+                    onChange={field.onChange}
+                    category="tala"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="composer"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Composer *</FormLabel>
+                <FormControl>
+                  <ClassificationCombobox
+                    label="Composer"
+                    options={composers}
+                    value={field.value}
+                    onChange={field.onChange}
+                    category="composer"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="deity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Deity *</FormLabel>
+                <FormControl>
+                  <ClassificationCombobox
+                    label="Deity"
+                    options={deities}
+                    value={field.value}
+                    onChange={field.onChange}
+                    category="deity"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-foreground">Notation Files (Optional)</label>
+          <div className="space-y-3">
             <Input
-              id="name"
-              type="text"
-              aria-label="Keerthana Name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter keerthana name"
-              required
-              className="border-border focus:ring-primary"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={handleFileChange}
+              disabled={isUploading}
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-foreground font-medium">Raga *</Label>
-              <Input
-                type="text"
-                aria-label="Raga"
-                value={formData.raga}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, raga: e.target.value }));
-                }}
-                placeholder="Type or select raga"
-                className="mb-2 border-border focus:ring-primary"
-                required
-              />
-              <Select value={selectedRaga} onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, raga: value }));
-              }}>
-                <SelectTrigger className="border-border focus:ring-primary">
-                  <SelectValue placeholder="Select raga" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ragas.map((raga) => (
-                    <SelectItem key={raga} value={raga}>{raga}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground font-medium">Tala *</Label>
-              <Input
-                type="text"
-                aria-label="Tala"
-                value={formData.tala}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, tala: e.target.value }));
-                }}
-                placeholder="Type or select tala"
-                className="mb-2 border-border focus:ring-primary"
-                required
-              />
-              <Select value={selectedTala} onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, tala: value }));
-              }}>
-                <SelectTrigger className="border-border focus:ring-primary">
-                  <SelectValue placeholder="Select tala" />
-                </SelectTrigger>
-                <SelectContent>
-                  {talas.map((tala) => (
-                    <SelectItem key={tala} value={tala}>{tala}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-foreground font-medium">Composer *</Label>
-              <Input
-                type="text"
-                aria-label="Composer"
-                value={formData.composer}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, composer: e.target.value }));
-                }}
-                placeholder="Type or select composer"
-                className="mb-2 border-border focus:ring-primary"
-                required
-              />
-              <Select value={selectedComposer} onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, composer: value }));
-              }}>
-                <SelectTrigger className="border-border focus:ring-primary">
-                  <SelectValue placeholder="Select composer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {composers.map((composer) => (
-                    <SelectItem key={composer} value={composer}>{composer}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground font-medium">Deity *</Label>
-              <Input
-                type="text"
-                aria-label="Deity"
-                value={formData.deity}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, deity: e.target.value }));
-                }}
-                placeholder="Type or select deity"
-                className="mb-2 border-border focus:ring-primary"
-                required
-              />
-              <Select value={selectedDeity} onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, deity: value }));
-              }}>
-                <SelectTrigger className="border-border focus:ring-primary">
-                  <SelectValue placeholder="Select deity" />
-                </SelectTrigger>
-                <SelectContent>
-                  {deities.map((deity) => (
-                    <SelectItem key={deity} value={deity}>{deity}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-
-
-          <div className="space-y-4">
-            <Label className="text-foreground font-medium">Notation Files (Optional)</Label>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setIsUploading(true);
-                      try {
-                        const url = await uploadFile(file);
-                        const type = file.type.includes('pdf') ? 'pdf' : 'image';
-                        setFormData(prev => ({
-                          ...prev,
-                          notationFiles: [...prev.notationFiles, { name: file.name, url, type }]
-                        }));
-                      } catch (error) {
-                        console.error('Upload failed:', error);
-                        alert('File upload failed. Please try again.');
-                      } finally {
-                        setIsUploading(false);
-                        // Clear the input so the same file can be selected again
-                        e.target.value = '';
-                      }
-                    }
-                  }}
-                  className="border-border focus:ring-primary"
-                  disabled={isUploading}
-                />
-                {isUploading && (
-                  <span className="text-sm text-muted-foreground">Uploading...</span>
-                )}
-              </div>
-              {formData.notationFiles.length > 0 && (
-                <div className="space-y-2">
-                  {formData.notationFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border border-border rounded-md">
-                      <span className="text-sm text-foreground">{file.name}</span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            notationFiles: prev.notationFiles.filter((_, i) => i !== index)
-                          }));
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
+            {isUploading && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Uploading... {uploadProgress}%
                 </div>
-              )}
-            </div>
+                <Progress value={uploadProgress} className="h-1.5" />
+              </div>
+            )}
+            {notationFiles.length > 0 && (
+              <div className="space-y-2">
+                {notationFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 border border-border rounded-md">
+                    <span className="text-sm text-foreground truncate">{file.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setNotationFiles((prev) => prev.filter((_, i) => i !== index))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="lyrics" className="text-foreground font-medium">Lyrics (Text - Optional)</Label>
-            <Textarea
-              id="lyrics"
-              value={formData.lyrics}
-              onChange={(e) => setFormData(prev => ({ ...prev, lyrics: e.target.value }))}
-              placeholder="Enter keerthana lyrics as text"
-              className="border-border focus:ring-primary min-h-24"
-            />
-          </div>
+        <FormField
+          control={form.control}
+          name="lyrics"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Lyrics (Optional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter keerthana lyrics as text" className="min-h-24" {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-          <div className="space-y-2">
-            <Label htmlFor="meaning" className="text-foreground font-medium">Meaning (Optional)</Label>
-            <Textarea
-              id="meaning"
-              value={formData.meaning}
-              onChange={(e) => setFormData(prev => ({ ...prev, meaning: e.target.value }))}
-              placeholder="Enter meaning or translation"
-              className="border-border focus:ring-primary min-h-24"
-            />
-          </div>
+        <FormField
+          control={form.control}
+          name="meaning"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Meaning (Optional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Enter meaning or translation" className="min-h-24" {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-          <div className="flex gap-4 pt-4">
-            <Button 
-              type="submit" 
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-              style={{ transition: 'var(--transition-smooth)' }}
-              disabled={isSubmitting || isUploading}
-            >
-              {isSubmitting ? (initialData ? "Updating..." : "Adding...") : (initialData ? "Update Keerthana" : "Add Keerthana")}
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              className="flex-1 border-border hover:bg-secondary"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <div className="flex gap-4 pt-4">
+          <Button
+            type="submit"
+            className="flex-1 shadow-elegant transition-smooth"
+            disabled={isSubmitting || isUploading}
+          >
+            {isSubmitting ? (initialData ? "Updating..." : "Adding...") : (initialData ? "Update Keerthana" : "Add Keerthana")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
