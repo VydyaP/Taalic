@@ -1,20 +1,15 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { uploadFile } from "../utils/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ClassificationCombobox } from "@/components/ClassificationCombobox";
-import { Loader2, X } from "lucide-react";
+import { NotationFileSection, NotationFile } from "@/components/NotationFileSection";
 import { Keerthana } from "./KeerthanaCard";
 import { keerthanaSchema, KeerthanaFormValues } from "@/lib/schemas";
-import { useToast } from "@/hooks/use-toast";
-import { ragas, talas, composers, deities } from "@/data/classifications";
-
-type NotationFile = { name: string; url: string; type: 'pdf' | 'image' };
+import { ragas, talas, composers, deities, notationLanguages } from "@/data/classifications";
 
 interface AddKeerthanaFormProps {
   onAdd: (keerthana: Omit<Keerthana, 'id'>) => Promise<void>;
@@ -33,10 +28,7 @@ const emptyValues: KeerthanaFormValues = {
 };
 
 export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaFormProps) => {
-  const { toast } = useToast();
   const [notationFiles, setNotationFiles] = useState<NotationFile[]>(initialData?.notationFiles || []);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<KeerthanaFormValues>({
@@ -70,29 +62,6 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData?.id]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    setUploadProgress(0);
-    try {
-      const url = await uploadFile(file, setUploadProgress);
-      const type: 'pdf' | 'image' = file.type.includes('pdf') ? 'pdf' : 'image';
-      setNotationFiles((prev) => [...prev, { name: file.name, url, type }]);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast({
-        title: "Upload failed",
-        description: "Could not upload the file. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      e.target.value = '';
-    }
-  };
 
   const onSubmit = async (values: KeerthanaFormValues) => {
     setIsSubmitting(true);
@@ -210,40 +179,19 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
 
         <div className="space-y-3">
           <label className="text-sm font-medium text-foreground">Notation Files (Optional)</label>
-          <div className="space-y-3">
-            <Input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleFileChange}
-              disabled={isUploading}
-            />
-            {isUploading && (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Uploading... {uploadProgress}%
-                </div>
-                <Progress value={uploadProgress} className="h-1.5" />
-              </div>
-            )}
-            {notationFiles.length > 0 && (
-              <div className="space-y-2">
-                {notationFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 border border-border rounded-md">
-                    <span className="text-sm text-foreground truncate">{file.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => setNotationFiles((prev) => prev.filter((_, i) => i !== index))}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <p className="text-xs text-muted-foreground">
+            Add whichever languages you have — one, two, or all three. You can come back later and add more,
+            including a newer version of a file, without losing what's already there.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {notationLanguages.map((language) => (
+              <NotationFileSection
+                key={language}
+                language={language}
+                notationFiles={notationFiles}
+                setNotationFiles={setNotationFiles}
+              />
+            ))}
           </div>
         </div>
 
@@ -277,7 +225,7 @@ export const AddKeerthanaForm = ({ onAdd, onCancel, initialData }: AddKeerthanaF
           <Button
             type="submit"
             className="flex-1 shadow-elegant transition-smooth"
-            disabled={isSubmitting || isUploading}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (initialData ? "Updating..." : "Adding...") : (initialData ? "Update Keerthana" : "Add Keerthana")}
           </Button>

@@ -1,24 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput } from "@/components/ui/command";
+import { AccountPanel } from "@/components/AccountPanel";
 import {
   Music, Users, Clock, Sparkles, Library, Plus, Search,
-  Trash2, Edit, CheckSquare, Square, Moon, Sun, MoreVertical, LogOut, ChevronDown,
+  Trash2, Edit, CheckSquare, Square, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { useAuth } from "@/auth/AuthProvider";
-import { useTheme } from "next-themes";
 
 export type ClassificationFilter = "all" | "raga" | "tala" | "composer" | "deity";
 
@@ -44,13 +34,6 @@ const navigationItems = [
   { key: "deity" as const, label: "By Deity", icon: Sparkles, color: "text-deity-primary" },
 ];
 
-function initials(user: { displayName?: string | null; email?: string | null }) {
-  const source = user.displayName || user.email || "";
-  const parts = source.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return source.slice(0, 2).toUpperCase() || "?";
-}
-
 export const Navigation = ({
   activeFilter,
   onFilterChange,
@@ -63,8 +46,6 @@ export const Navigation = ({
   onBulkDelete,
   onBulkEdit,
 }: NavigationProps) => {
-  const { signOutUser, user, loading } = useAuth();
-  const { setTheme, resolvedTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
 
   const activeItem = navigationItems.find((i) => i.key === activeFilter) ?? navigationItems[0];
@@ -100,14 +81,6 @@ export const Navigation = ({
 
             {/* Desktop actions */}
             <div className="hidden md:flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-                aria-label="Toggle theme"
-              >
-                {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
               {!isSelectionMode ? (
                 <>
                   <Button onClick={onAddNew} className="shadow-elegant transition-smooth">
@@ -135,78 +108,47 @@ export const Navigation = ({
                   </Button>
                 </>
               )}
-              <Button variant="outline" onClick={signOutUser}>Log out</Button>
             </div>
 
             {/* Mobile actions */}
             <div className="flex md:hidden items-center gap-2">
               {!isSelectionMode ? (
-                <Button size="icon" onClick={onAddNew} aria-label="Add Kruthi" className="shadow-elegant">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  onClick={onBulkDelete}
-                  disabled={selectedCount === 0}
-                  aria-label={`Delete ${selectedCount} selected`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="More actions">
-                    <MoreVertical className="h-4 w-4" />
+                <>
+                  <Button size="icon" onClick={onAddNew} aria-label="Add Kruthi" className="shadow-elegant">
+                    <Plus className="h-4 w-4" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
-                    {resolvedTheme === "dark" ? (
-                      <Sun className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Moon className="h-4 w-4 mr-2" />
-                    )}
-                    Toggle theme
-                  </DropdownMenuItem>
-                  {!isSelectionMode ? (
-                    <DropdownMenuItem onClick={onToggleSelectionMode}>
-                      <CheckSquare className="h-4 w-4 mr-2" />
-                      Select
-                    </DropdownMenuItem>
-                  ) : (
-                    <>
-                      <DropdownMenuItem onClick={onBulkEdit} disabled={selectedCount === 0}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit ({selectedCount})
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={onToggleSelectionMode}>
-                        <Square className="h-4 w-4 mr-2" />
-                        Cancel selection
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOutUser}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Button size="icon" variant="outline" onClick={onToggleSelectionMode} aria-label="Select">
+                    <CheckSquare className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={onBulkDelete}
+                    disabled={selectedCount === 0}
+                    aria-label={`Delete ${selectedCount} selected`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={onBulkEdit}
+                    disabled={selectedCount === 0}
+                    aria-label={`Edit ${selectedCount} selected`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="outline" onClick={onToggleSelectionMode} aria-label="Cancel selection">
+                    <Square className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
 
-            {/* User avatar */}
-            {loading ? (
-              <Skeleton className="h-9 w-9 rounded-full" />
-            ) : (
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.photoURL ?? undefined} alt={user?.displayName ?? "User"} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  {user ? initials(user) : "?"}
-                </AvatarFallback>
-              </Avatar>
-            )}
+            <AccountPanel />
           </div>
         </div>
 

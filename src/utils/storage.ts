@@ -1,4 +1,4 @@
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { ref, uploadBytesResumable, getDownloadURL, listAll, getMetadata } from 'firebase/storage'
 import { storage } from '../firebase'
 
 export async function uploadFile(file: File, onProgress?: (percent: number) => void): Promise<string> {
@@ -26,4 +26,12 @@ export async function uploadFile(file: File, onProgress?: (percent: number) => v
       }
     )
   })
+}
+
+export async function getStorageUsage(): Promise<{ bytes: number; fileCount: number }> {
+  const folderRef = ref(storage, 'keerthana-files')
+  const result = await listAll(folderRef)
+  const metadatas = await Promise.all(result.items.map((item) => getMetadata(item)))
+  const bytes = metadatas.reduce((sum, m) => sum + (m.size || 0), 0)
+  return { bytes, fileCount: metadatas.length }
 }

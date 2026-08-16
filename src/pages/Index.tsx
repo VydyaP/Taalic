@@ -23,6 +23,22 @@ import {
   serverTimestamp,
   writeBatch,
 } from "firebase/firestore";
+import { notationLanguages } from "@/data/classifications";
+
+function groupNotationFilesByLanguage(files: Keerthana["notationFiles"]) {
+  const groups: Record<string, NonNullable<Keerthana["notationFiles"]>> = {};
+  (files || []).forEach((file) => {
+    // Files uploaded before language tagging existed have no `language` set — they were all Telugu.
+    const key = file.language || "Telugu";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(file);
+  });
+  const orderedKeys = [
+    ...notationLanguages.filter((lang) => groups[lang]),
+    ...Object.keys(groups).filter((key) => !(notationLanguages as readonly string[]).includes(key)),
+  ];
+  return orderedKeys.map((language) => ({ language, files: groups[language] }));
+}
 
 const groupAccentColor: Record<string, string> = {
   raga: "bg-raga-primary",
@@ -465,40 +481,45 @@ const Index = () => {
                   <h3 className="text-xl font-semibold text-foreground">Notation & Lyrics</h3>
 
                   {selectedKeerthana.notationFiles?.length > 0 && (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <h4 className="text-lg font-medium text-foreground">Notation Files</h4>
-                      <div className="space-y-4">
-                        {selectedKeerthana.notationFiles.map((file, index) => (
-                          <div key={index} className="space-y-2">
-                            <div className="flex items-center gap-3 p-2 border border-border rounded-lg bg-muted/20">
-                              <span className="text-sm font-medium text-foreground">{file.name}</span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(file.url, '_blank')}
-                                className="ml-auto"
-                              >
-                                Open in New Tab
-                              </Button>
-                            </div>
-                            <div className="border border-border rounded-lg overflow-hidden">
-                              {file.type === 'pdf' ? (
-                                <iframe
-                                  src={file.url}
-                                  className="w-full h-96"
-                                  title={file.name}
-                                />
-                              ) : (
-                                <img
-                                  src={file.url}
-                                  alt={file.name}
-                                  className="w-full max-h-96 object-contain"
-                                />
-                              )}
-                            </div>
+                      {groupNotationFilesByLanguage(selectedKeerthana.notationFiles).map(({ language, files }) => (
+                        <div key={language} className="space-y-3">
+                          <h5 className="text-sm font-semibold text-muted-foreground">{language}</h5>
+                          <div className="space-y-4">
+                            {files.map((file, index) => (
+                              <div key={index} className="space-y-2">
+                                <div className="flex items-center gap-3 p-2 border border-border rounded-lg bg-muted/20">
+                                  <span className="text-sm font-medium text-foreground">{file.name}</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(file.url, '_blank')}
+                                    className="ml-auto"
+                                  >
+                                    Open in New Tab
+                                  </Button>
+                                </div>
+                                <div className="border border-border rounded-lg overflow-hidden">
+                                  {file.type === 'pdf' ? (
+                                    <iframe
+                                      src={file.url}
+                                      className="w-full h-96"
+                                      title={file.name}
+                                    />
+                                  ) : (
+                                    <img
+                                      src={file.url}
+                                      alt={file.name}
+                                      className="w-full max-h-96 object-contain"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
@@ -531,7 +552,9 @@ const Index = () => {
                                   />
                                 </button>
                               )}
-                              <span className="text-xs mt-1 truncate w-full text-center">{file.name}</span>
+                              <span className="text-xs mt-1 truncate w-full text-center">
+                                {file.name} ({file.language || "Telugu"})
+                              </span>
                             </div>
                           ))}
                         </div>

@@ -15,6 +15,7 @@ export interface Keerthana {
     name: string;
     url: string;
     type: 'pdf' | 'image';
+    language?: string;
   }[];
 }
 
