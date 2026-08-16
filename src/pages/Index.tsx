@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigation, ClassificationFilter } from "@/components/Navigation";
 import { KeerthanaCard, Keerthana } from "@/components/KeerthanaCard";
 import { AddKeerthanaForm } from "@/components/AddKeerthanaForm";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useBackCloseable } from "@/hooks/use-back-closeable";
 import { Trash2, Edit, Library } from "lucide-react";
 import { db } from "@/firebase";
 import {
@@ -96,6 +97,10 @@ const Index = () => {
   const [passwordAction, setPasswordAction] = useState<"add" | "edit" | "delete">("add");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const passwordModalOpenRef = useRef(showPasswordModal);
+  useEffect(() => {
+    passwordModalOpenRef.current = showPasswordModal;
+  }, [showPasswordModal]);
 
   // Bulk operations states
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -104,6 +109,14 @@ const Index = () => {
 
   // Security code from environment variable
   const SECURITY_CODE = import.meta.env.VITE_SECURITY_CODE || "1234";
+
+  useBackCloseable(showAddForm, () => setShowAddForm(false));
+  useBackCloseable(showBulkEditDialog, () => setShowBulkEditDialog(false));
+  useBackCloseable(!!selectedKeerthana && !isEditing, () => {
+    setSelectedKeerthana(null);
+    setIsEditing(false);
+  });
+  useBackCloseable(isEditing && !!selectedKeerthana, () => setIsEditing(false));
 
   useEffect(() => {
     async function loadKeerthanas() {
@@ -151,6 +164,13 @@ const Index = () => {
 
     // Simulate a small delay for better UX
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    // The modal may have been dismissed (e.g. phone back button) while this
+    // delay was in flight — don't run the pending action for a cancelled prompt.
+    if (!passwordModalOpenRef.current) {
+      setPasswordLoading(false);
+      return;
+    }
 
     if (password === SECURITY_CODE) {
       setPasswordLoading(false);
@@ -210,7 +230,7 @@ const Index = () => {
     const ids = Array.from(selectedKeerthanas);
     try {
       const batch = writeBatch(db);
-      ids.forEach((id) => batch.update(doc(db, "keerthanas", id), changes));
+      ids.forEach((id) => batch.update(doc(db, "keerthanas", id), { ...changes }));
       await batch.commit();
 
       setKeerthanas(prev => prev.map(k => selectedKeerthanas.has(k.id) ? { ...k, ...changes } : k));

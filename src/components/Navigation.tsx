@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useBackCloseable } from "@/hooks/use-back-closeable";
 
 export type ClassificationFilter = "all" | "raga" | "tala" | "composer" | "deity";
 
@@ -47,6 +48,10 @@ export const Navigation = ({
   onBulkEdit,
 }: NavigationProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+
+  useBackCloseable(searchOpen, () => setSearchOpen(false));
+  useBackCloseable(filterSheetOpen, () => setFilterSheetOpen(false));
 
   const activeItem = navigationItems.find((i) => i.key === activeFilter) ?? navigationItems[0];
   const ActiveIcon = activeItem.icon;
@@ -177,7 +182,7 @@ export const Navigation = ({
           </div>
 
           {/* Mobile: single trigger opening a bottom sheet */}
-          <Sheet>
+          <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" className="w-full md:hidden justify-between">
                 <span className="flex items-center gap-2">

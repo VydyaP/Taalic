@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBackCloseable } from "@/hooks/use-back-closeable";
 
 interface PasswordModalProps {
   isOpen: boolean;
@@ -69,6 +70,8 @@ export const PasswordModal = ({
     setShowPassword(false);
     onClose();
   };
+
+  useBackCloseable(isOpen, handleClose);
 
   const config = actionConfig[action];
   const ActionIcon = config.icon;

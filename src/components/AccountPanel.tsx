@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { getStorageUsage } from "@/utils/storage";
+import { useBackCloseable } from "@/hooks/use-back-closeable";
 
 // Firebase Storage's no-cost tier is 5 GB of stored files.
 const FREE_TIER_BYTES = 5 * 1024 * 1024 * 1024;
@@ -48,6 +49,8 @@ export function AccountPanel() {
         .finally(() => setUsageLoading(false));
     }
   };
+
+  useBackCloseable(open, () => setOpen(false));
 
   const percent = usage ? Math.min(100, (usage.bytes / FREE_TIER_BYTES) * 100) : 0;
 
