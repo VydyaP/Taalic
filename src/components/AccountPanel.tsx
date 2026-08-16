@@ -4,7 +4,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/auth/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
@@ -73,6 +73,7 @@ export function AccountPanel() {
       <SheetContent side="right" className="w-80 flex flex-col">
         <SheetHeader>
           <SheetTitle className="sr-only">Account</SheetTitle>
+          <SheetDescription className="sr-only">Account settings: dark mode, storage usage, and log out</SheetDescription>
         </SheetHeader>
 
         <div className="flex items-center gap-3 pb-4 border-b border-border">

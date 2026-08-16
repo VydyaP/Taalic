@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandInput } from "@/components/ui/command";
 import { AccountPanel } from "@/components/AccountPanel";
 import {
   Music, Users, Clock, Sparkles, Library, Plus, Search,
@@ -68,14 +68,17 @@ export const Navigation = ({
                   <Search className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 p-0">
-                <Command shouldFilter={false}>
-                  <CommandInput
+              <PopoverContent align="end" className="w-72 p-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    autoFocus
                     placeholder="Search keerthanas..."
                     value={searchValue}
-                    onValueChange={(v) => onSearchChange?.(v)}
+                    onChange={(e) => onSearchChange?.(e.target.value)}
+                    className="pl-9"
                   />
-                </Command>
+                </div>
               </PopoverContent>
             </Popover>
 
@@ -187,6 +190,7 @@ export const Navigation = ({
             <SheetContent side="bottom" className="rounded-t-2xl">
               <SheetHeader>
                 <SheetTitle>Browse by</SheetTitle>
+                <SheetDescription className="sr-only">Filter keerthanas by raga, tala, composer, or deity</SheetDescription>
               </SheetHeader>
               <div className="grid grid-cols-1 gap-2 py-4">
                 {navigationItems.map((item) => {
