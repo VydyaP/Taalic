@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Music, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const { user, signInWithGoogle } = useAuth();
@@ -25,38 +25,28 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-warm opacity-20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-mystical opacity-20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-divine opacity-10 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <div className="h-14 w-14 rotate-45 border-2 border-primary flex items-center justify-center">
+            <div className="h-4 w-4 -rotate-45 rounded-full bg-accent" />
+          </div>
+        </div>
 
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-md">
-        <Card className="w-full shadow-2xl border-0 bg-card/80 backdrop-blur-xl">
-          <CardHeader className="space-y-6 text-center pb-8">
-            {/* Logo and branding */}
-            <div className="space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full bg-gradient-warm flex items-center justify-center shadow-elegant">
-                <Music className="h-10 w-10 text-primary-foreground" />
-              </div>
-              <div className="space-y-2">
-                <CardTitle className="font-display text-3xl font-bold text-foreground">
-                  Keerthana Collection
-                </CardTitle>
-                <p className="text-lg text-muted-foreground font-medium">Your personal Carnatic music archive</p>
-              </div>
-            </div>
+        <Card className="w-full border-2 border-border shadow-elegant">
+          <CardHeader className="space-y-3 text-center pb-6">
+            <p className="label-caps">A private archive</p>
+            <CardTitle className="font-display text-4xl font-extrabold text-foreground">
+              Keerthana Collection
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">Your personal Carnatic music archive</p>
           </CardHeader>
 
           <CardContent className="space-y-6 px-8 pb-8">
-            {/* Sign in button */}
             <Button
               onClick={handleSignIn}
               disabled={isSigningIn}
-              className="w-full h-12 font-semibold shadow-elegant transition-smooth hover:-translate-y-0.5"
+              className="w-full h-12 font-semibold transition-smooth"
               variant="default"
             >
               {isSigningIn ? (
@@ -71,6 +61,7 @@ export default function Login() {
               )}
               {isSigningIn ? "Signing in..." : "Continue with Google"}
             </Button>
+            <p className="label-caps text-center">Invite only &middot; no public signup</p>
           </CardContent>
         </Card>
       </div>

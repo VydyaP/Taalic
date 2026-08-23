@@ -54,7 +54,6 @@ export default {
 				},
 				raga: {
 					primary: 'hsl(var(--raga-primary))',
-					secondary: 'hsl(var(--raga-secondary))',
 					foreground: 'hsl(var(--raga-foreground))'
 				},
 				tala: {
@@ -86,18 +85,13 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				display: ['Fraunces', 'serif'],
-				sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+				display: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				sans: ['DM Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
 			},
 			boxShadow: {
 				elegant: 'var(--shadow-elegant)',
 				card: 'var(--shadow-card)'
-			},
-			backgroundImage: {
-				'gradient-warm': 'var(--gradient-warm)',
-				'gradient-cool': 'var(--gradient-cool)',
-				'gradient-mystical': 'var(--gradient-mystical)',
-				'gradient-divine': 'var(--gradient-divine)'
 			},
 			keyframes: {
 				'accordion-down': {

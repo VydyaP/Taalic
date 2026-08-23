@@ -52,4 +52,4 @@ export function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
   if (loading) return null; // or a spinner
   return user ? children : <Navigate to="/login" replace />;
-} 
+}

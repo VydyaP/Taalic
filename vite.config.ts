@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => ({
         name: "Keerthana Collection",
         short_name: "Keerthana",
         description: "A personal collection of Carnatic music keerthanas",
-        theme_color: "#bb561b",
-        background_color: "#fbfaf9",
+        theme_color: "#1c7d7b",
+        background_color: "#f8f6e7",
         display: "standalone",
         start_url: "/",
         icons: [
