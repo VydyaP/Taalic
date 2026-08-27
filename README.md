@@ -7,8 +7,7 @@ A web application for managing and exploring Keerthanas (Carnatic music composit
 ## Project Info
 
 - **Repository:** https://github.com/VydyaP/Taalic
-- **Live Demo:** https://raga-rhythm-dev.vercel.app
-
+- **Live Demo:** https://taalic.vercel.app/
 ---
 
 ## How to Use This Project
