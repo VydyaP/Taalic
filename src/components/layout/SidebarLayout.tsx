@@ -52,7 +52,7 @@ export function SidebarLayout() {
                   </span>
                   <span className="leading-none group-data-[collapsible=icon]:hidden">
                     <span className="block font-display text-lg font-bold">Keerthana</span>
-                    <span className="label-caps text-sidebar-foreground/70">Collection</span>
+                    <span className="label-caps !text-sidebar-foreground/70">Collection</span>
                   </span>
                 </NavLink>
                 <SidebarTrigger
@@ -69,7 +69,7 @@ export function SidebarLayout() {
 
             <SidebarContent className="px-2 pt-4">
               <SidebarGroup className="p-0">
-                <SidebarGroupLabel className="label-caps px-2">Navigate</SidebarGroupLabel>
+                <SidebarGroupLabel className="label-caps px-2 !text-white">Navigate</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     <SidebarMenuItem>
@@ -77,7 +77,7 @@ export function SidebarLayout() {
                         <NavLink to={paths.home()} end className={navItemClass}>
                           <Library className="h-4 w-4" />
                           <span>Collection</span>
-                          <span className="ml-auto label-caps text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">
+                          <span className="ml-auto label-caps !text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">
                             {keerthanas.length}
                           </span>
                         </NavLink>
