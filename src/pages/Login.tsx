@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { KolamMark } from "@/components/branding/KolamMark";
 
 export default function Login() {
   const { user, signInWithGoogle } = useAuth();
@@ -28,8 +29,8 @@ export default function Login() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <div className="h-14 w-14 rotate-45 border-2 border-primary flex items-center justify-center">
-            <div className="h-4 w-4 -rotate-45 rounded-full bg-accent" />
+          <div className="h-14 w-14 rounded-full border-2 border-primary flex items-center justify-center">
+            <KolamMark className="h-9 w-9 text-primary" />
           </div>
         </div>
 

@@ -1,19 +1,31 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Library, Settings } from "lucide-react";
+import { Library, Plus, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarProvider,
   SidebarHeader,
   SidebarContent,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { KolamMark } from "@/components/branding/KolamMark";
 import { cn } from "@/lib/utils";
 import { paths } from "@/routes/paths";
 import { MobileTabBar } from "./MobileTabBar";
 import { useKeerthanas } from "@/lib/keerthanas";
+
+const navItemClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "relative flex items-center gap-2 transition-smooth",
+    isActive &&
+      "bg-sidebar-accent text-sidebar-accent-foreground font-medium before:absolute before:-left-2 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-sidebar-primary group-data-[collapsible=icon]:before:hidden"
+  );
 
 export function SidebarLayout() {
   const { data: keerthanas = [] } = useKeerthanas();
@@ -22,11 +34,11 @@ export function SidebarLayout() {
     <SidebarProvider defaultOpen>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon" className="hidden md:flex border-r border-sidebar-border">
-          <SidebarHeader className="px-4 py-6">
-            <div className="flex items-center justify-between gap-2">
+          <SidebarHeader className="px-4 py-6 group-data-[collapsible=icon]:px-2">
+            <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
               <NavLink to={paths.home()} className="flex items-center gap-2.5 min-w-0">
-                <span className="flex h-8 w-8 rotate-45 items-center justify-center border-2 border-sidebar-foreground shrink-0">
-                  <span className="h-2.5 w-2.5 -rotate-45 rounded-full bg-sidebar-foreground" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-sidebar-foreground/40 shrink-0">
+                  <KolamMark className="h-5 w-5 text-sidebar-foreground" />
                 </span>
                 <span className="leading-none group-data-[collapsible=icon]:hidden">
                   <span className="block font-display text-lg font-bold">Keerthana</span>
@@ -37,42 +49,46 @@ export function SidebarLayout() {
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="px-2">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to={paths.home()}
-                    end
-                    className={({ isActive }) =>
-                      cn("flex items-center gap-2", isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium")
-                    }
-                  >
-                    <Library className="h-4 w-4" />
-                    <span>Collection</span>
-                    <span className="ml-auto label-caps text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
-                      {keerthanas.length}
-                    </span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to={paths.settings()}
-                    className={({ isActive }) =>
-                      cn("flex items-center gap-2", isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium")
-                    }
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+          <SidebarSeparator />
+
+          <SidebarContent className="px-2 pt-4">
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel className="label-caps px-2">Navigate</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Collection">
+                      <NavLink to={paths.home()} end className={navItemClass}>
+                        <Library className="h-4 w-4" />
+                        <span>Collection</span>
+                        <span className="ml-auto label-caps text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">
+                          {keerthanas.length}
+                        </span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Add">
+                      <NavLink to={paths.add()} className={navItemClass}>
+                        <Plus className="h-4 w-4" />
+                        <span>Add</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Settings">
+                      <NavLink to={paths.settings()} className={navItemClass}>
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarContent>
 
-          <div className="hidden group-data-[collapsible=icon]:flex justify-center py-3">
+          <div className="border-t border-sidebar-border py-3 hidden group-data-[collapsible=icon]:flex justify-center">
             <SidebarTrigger />
           </div>
         </Sidebar>
