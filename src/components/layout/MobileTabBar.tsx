@@ -20,7 +20,7 @@ export function MobileTabBar() {
           className={({ isActive }) =>
             cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 label-caps",
-              isActive ? "text-black" : "text-black/60"
+              isActive ? "text-white font-semibold" : "text-white/70"
             )
           }
         >
