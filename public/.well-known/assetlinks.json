@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.taalic.twa",
+        "sha256_cert_fingerprints": ["A2:95:FC:1B:81:C4:ED:DD:A4:D9:6C:AE:F6:E8:BD:A0:C3:9C:D8:B5:43:C1:40:D5:88:D3:C4:53:09:29:34:B4"]
+      }
+    }]
