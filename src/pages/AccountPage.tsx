@@ -1,21 +1,9 @@
-import { useEffect, useState } from "react";
-import { HardDrive, LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/auth/AuthProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Progress } from "@/components/ui/progress";
-import { getStorageUsage } from "@/utils/storage";
-
-// Firebase Storage's no-cost tier is 5 GB of stored files.
-const FREE_TIER_BYTES = 5 * 1024 * 1024 * 1024;
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
 
 function initials(user: { displayName?: string | null; email?: string | null }) {
   const source = user.displayName || user.email || "";
@@ -27,30 +15,6 @@ function initials(user: { displayName?: string | null; email?: string | null }) 
 export default function AccountPage() {
   const { signOutUser, user } = useAuth();
   const { setTheme, resolvedTheme } = useTheme();
-  const [usageLoading, setUsageLoading] = useState(true);
-  const [usage, setUsage] = useState<{ bytes: number; fileCount: number } | null>(null);
-  const [usageError, setUsageError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setUsageLoading(true);
-    getStorageUsage()
-      .then((u) => {
-        if (!cancelled) setUsage(u);
-      })
-      .catch((err) => {
-        console.error('Error fetching storage usage:', err);
-        if (!cancelled) setUsageError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setUsageLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const percent = usage ? Math.min(100, (usage.bytes / FREE_TIER_BYTES) * 100) : 0;
 
   return (
     <div className="max-w-lg space-y-8">
@@ -91,30 +55,6 @@ export default function AccountPage() {
             onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
             aria-label="Toggle dark mode"
           />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <p className="label-caps">Notation File Storage</p>
-        <div className="p-4 rounded-lg border border-border space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <HardDrive className="h-4 w-4 text-primary" />
-            {usageLoading
-              ? "Calculating..."
-              : usageError
-              ? "Couldn't load storage usage."
-              : usage
-              ? `${formatBytes(usage.bytes)} of 5 GB`
-              : null}
-          </div>
-          {!usageLoading && !usageError && usage && (
-            <>
-              <Progress value={percent} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {usage.fileCount} file{usage.fileCount === 1 ? "" : "s"}
-              </p>
-            </>
-          )}
         </div>
       </div>
 
