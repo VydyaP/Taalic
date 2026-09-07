@@ -3,6 +3,9 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.taalic.twa",
-        "sha256_cert_fingerprints": ["A2:95:FC:1B:81:C4:ED:DD:A4:D9:6C:AE:F6:E8:BD:A0:C3:9C:D8:B5:43:C1:40:D5:88:D3:C4:53:09:29:34:B4"]
+        "sha256_cert_fingerprints": [
+          "A2:95:FC:1B:81:C4:ED:DD:A4:D9:6C:AE:F6:E8:BD:A0:C3:9C:D8:B5:43:C1:40:D5:88:D3:C4:53:09:29:34:B4",
+          "C6:7A:A6:F4:58:63:0D:8D:D9:25:00:5D:43:BA:D0:FC:22:3C:6D:A0:79:16:C9:A9:A2:14:3E:2D:0D:52:A9:17"
+        ]
       }
     }]
