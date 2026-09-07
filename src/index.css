@@ -82,7 +82,7 @@ All colors MUST be HSL.
     --popover: 244 24% 15%;
     --popover-foreground: 51 45% 93%;
 
-    --primary: 69 79% 62%;
+    --primary: 178 60% 50%;
     --primary-foreground: 244 27% 12%;
 
     --secondary: 244 22% 21%;
@@ -99,7 +99,7 @@ All colors MUST be HSL.
 
     --border: 244 17% 25%;
     --input: 244 17% 29%;
-    --ring: 69 79% 62%;
+    --ring: 178 60% 50%;
 
     /* Carnatic category tokens — same hues as light, brightened for dark-bg legibility */
     --raga-primary: 35 70% 58%;
@@ -121,12 +121,12 @@ All colors MUST be HSL.
 
     --sidebar-background: 183 42% 12%;
     --sidebar-foreground: 51 45% 93%;
-    --sidebar-primary: 69 79% 62%;
+    --sidebar-primary: 178 60% 50%;
     --sidebar-primary-foreground: 244 27% 12%;
     --sidebar-accent: 183 32% 20%;
     --sidebar-accent-foreground: 51 45% 93%;
     --sidebar-border: 183 30% 20%;
-    --sidebar-ring: 69 79% 62%;
+    --sidebar-ring: 178 60% 50%;
   }
 }
 
