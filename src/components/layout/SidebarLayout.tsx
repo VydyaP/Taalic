@@ -69,7 +69,7 @@ export function SidebarLayout() {
 
             <SidebarContent className="px-2 pt-4">
               <SidebarGroup className="p-0">
-                <SidebarGroupLabel className="label-caps px-2 !text-white">Navigate</SidebarGroupLabel>
+                <SidebarGroupLabel className="label-caps px-2 !text-sidebar-foreground/70">Navigate</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     <SidebarMenuItem>
