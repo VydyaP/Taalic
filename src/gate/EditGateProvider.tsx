@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/auth/AuthProvider";
 import { PasswordModal } from "@/components/PasswordModal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -8,23 +7,20 @@ import { useToast } from "@/hooks/use-toast";
 type GateAction = "add" | "edit" | "delete";
 
 interface EditGateContextValue {
-  unlocked: boolean;
   requireCode: (action: GateAction, callback: () => void) => void;
 }
 
 const EditGateContext = createContext<EditGateContextValue | undefined>(undefined);
 
 /**
- * Gates add/edit/delete actions behind a shared security code. Unlocks once
- * per app-open session (not re-prompted per action) and resets if the signed
- * -in account changes. This is friction against accidental taps, not a real
- * security boundary — actual access control is Firebase Auth (Firestore/
- * Storage rules require a signed-in account).
+ * Gates add/edit/delete actions behind a shared security code, prompting
+ * every time with no persistence across actions or app sessions. This is
+ * friction against accidental/unwanted edits, not a real security boundary —
+ * actual access control is Firebase Auth (Firestore/Storage rules require a
+ * signed-in account).
  */
 export function EditGateProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [unlocked, setUnlocked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [action, setAction] = useState<GateAction>("add");
   const [loading, setLoading] = useState(false);
@@ -34,21 +30,9 @@ export function EditGateProvider({ children }: { children: ReactNode }) {
     modalOpenRef.current = showModal;
   }, [showModal]);
 
-  const uidRef = useRef(user?.uid);
-  useEffect(() => {
-    if (uidRef.current !== user?.uid) {
-      uidRef.current = user?.uid;
-      setUnlocked(false);
-    }
-  }, [user?.uid]);
-
   const SECURITY_CODE = import.meta.env.VITE_SECURITY_CODE || "1234";
 
   const requireCode = (nextAction: GateAction, callback: () => void) => {
-    if (unlocked) {
-      callback();
-      return;
-    }
     setAction(nextAction);
     pendingRef.current = callback;
     setShowModal(true);
@@ -67,7 +51,6 @@ export function EditGateProvider({ children }: { children: ReactNode }) {
 
     if (password === SECURITY_CODE) {
       setLoading(false);
-      setUnlocked(true);
       setShowModal(false);
       const callback = pendingRef.current;
       pendingRef.current = null;
@@ -83,7 +66,7 @@ export function EditGateProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <EditGateContext.Provider value={{ unlocked, requireCode }}>
+    <EditGateContext.Provider value={{ requireCode }}>
       {children}
       <PasswordModal
         isOpen={showModal}
@@ -121,29 +104,31 @@ interface GateRouteProps {
 }
 
 /**
- * Wraps a route that should never be reachable without unlocking first
- * (e.g. a direct link/bookmark to /add). Uses the same requireCode()
- * mechanism as button-click gating, so there's one gate, not two.
+ * Wraps a route that should never be reachable without entering the code
+ * first (e.g. a direct link/bookmark to /add). Verification is local to
+ * this mount — navigating away and back re-prompts, same as every other
+ * gated action.
  */
 export function GateRoute({ action, children }: GateRouteProps) {
-  const { unlocked, requireCode } = useEditGate();
+  const { requireCode } = useEditGate();
   const navigate = useNavigate();
+  const [verified, setVerified] = useState(false);
   const attemptedRef = useRef(false);
 
   useEffect(() => {
-    if (!unlocked && !attemptedRef.current) {
+    if (!verified && !attemptedRef.current) {
       attemptedRef.current = true;
-      requireCode(action, () => {});
+      requireCode(action, () => setVerified(true));
     }
-  }, [unlocked, action, requireCode]);
+  }, [verified, action, requireCode]);
 
-  if (!unlocked) {
+  if (!verified) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <p className="text-lg text-foreground">Unlock to continue</p>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate("/")}>Back to collection</Button>
-          <Button onClick={() => requireCode(action, () => {})}>Try again</Button>
+          <Button onClick={() => requireCode(action, () => setVerified(true))}>Try again</Button>
         </div>
       </div>
     );

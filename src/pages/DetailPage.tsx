@@ -98,7 +98,7 @@ export default function DetailPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => requireCode("edit", () => navigate(paths.edit(keerthana.id)))}>
+          <Button size="sm" onClick={() => navigate(paths.edit(keerthana.id))}>
             <Edit className="h-4 w-4" />
             Edit
           </Button>
